@@ -33,6 +33,8 @@ if test -L "$me"; then
 fi
 
 bindir=`dirname "$me"`
+QTC_SOURCE=`dirname "$bindir"`
+export QTC_SOURCE
 libdir=`cd "$bindir/../lib" ; pwd`
 # Add path to deployed Qt libraries in package
 qtlibdir=$libdir/Qt/lib

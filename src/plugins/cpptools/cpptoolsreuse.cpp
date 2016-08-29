@@ -150,6 +150,7 @@ bool isValidIdentifier(const QString &s)
 
 bool isQtKeyword(const QStringRef &text)
 {
+#if 0  // KILLED BY KENTON
     switch (text.length()) {
     case 4:
         switch (text.at(0).toLatin1()) {
@@ -190,6 +191,7 @@ bool isQtKeyword(const QStringRef &text)
     default:
         break;
     }
+#endif
     return false;
 }
 

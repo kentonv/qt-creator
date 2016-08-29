@@ -142,7 +142,7 @@ static inline int classify4(const char *s, LanguageFeatures features)
     else if (features.qtKeywordsEnabled && s[1] == 'm') {
       if (s[2] == 'i') {
         if (s[3] == 't') {
-          return T_EMIT;
+//          return T_EMIT;
         }
       }
     }
@@ -194,7 +194,7 @@ static inline int classify4(const char *s, LanguageFeatures features)
     if (s[1] == 'L') {
       if (s[2] == 'O') {
         if (s[3] == 'T') {
-          return T_SLOT;
+//          return T_SLOT;
         }
       }
     }
@@ -290,7 +290,7 @@ static inline int classify5(const char *s, LanguageFeatures features)
         if (s[2] == 'o') {
           if (s[3] == 't') {
             if (s[4] == 's') {
-              return T_Q_SLOTS;
+//              return T_Q_SLOTS;
             }
           }
         }
@@ -519,7 +519,7 @@ static inline int classify6(const char *s, LanguageFeatures features)
         if (s[3] == 'N') {
           if (s[4] == 'A') {
             if (s[5] == 'L') {
-              return T_SIGNAL;
+//              return T_SIGNAL;
             }
           }
         }
@@ -666,7 +666,7 @@ static inline int classify7(const char *s, LanguageFeatures features)
           if (s[4] == 'a') {
             if (s[5] == 'c') {
               if (s[6] == 'h') {
-                return T_Q_FOREACH;
+//                return T_Q_FOREACH;
               }
             }
           }
@@ -681,7 +681,7 @@ static inline int classify7(const char *s, LanguageFeatures features)
           if (s[4] == 'a') {
             if (s[5] == 'l') {
               if (s[6] == 's') {
-                return T_Q_SIGNALS;
+//                return T_Q_SIGNALS;
               }
             }
           }
