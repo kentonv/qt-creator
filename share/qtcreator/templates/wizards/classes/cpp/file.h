@@ -1,6 +1,6 @@
 %{Cpp:LicenseTemplate}\
-#ifndef %{GUARD}
-#define %{GUARD}
+#ifndef %{GUARD}_
+#define %{GUARD}_
 
 %{JS: QtSupport.qtIncludes([ ( '%{IncludeQObject}' )          ? 'QtCore/%{IncludeQObject}'                 : '',
                              ( '%{IncludeQWidget}' )          ? 'QtGui/%{IncludeQWidget}'                  : '',
@@ -53,4 +53,4 @@ private:
 @endif
 };
 %{JS: Cpp.closeNamespaces('%{Class}')}
-#endif // %{GUARD}\
+#endif // %{GUARD}_\

@@ -89,6 +89,7 @@ static bool same(const char *a, const char *b, int size)
 
 static bool isQtReservedWord(const char *name, int size)
 {
+#if 0  // KILLED BY KENTON
     if (size < 4)
         return false;
 
@@ -133,6 +134,7 @@ static bool isQtReservedWord(const char *name, int size)
 
     if (c == 'e')
         return size == 4 && same(name, "emit", size);
+#endif
 
     return false;
 }
