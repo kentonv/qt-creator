@@ -383,6 +383,7 @@ void FindToolBar::updateGlobalActions()
     IFindSupport *candidate = m_currentDocumentFind->candidate();
     bool enabled = (candidate != 0);
     bool replaceEnabled = enabled && candidate->supportsReplace();
+    enabled = true;
     m_findInDocumentAction->setEnabled(enabled || (toolBarHasFocus() && isEnabled()));
     m_findNextSelectedAction->setEnabled(enabled);
     m_findPreviousSelectedAction->setEnabled(enabled);
