@@ -80,6 +80,7 @@ public:
         m_completionAssistProvider(0),
         m_indenter(new Indenter),
         m_fileIsReadOnly(false),
+        m_isMakefile(false),
         m_autoSaveRevision(-1)
     {
     }
@@ -89,12 +90,25 @@ public:
     void resetRevisions();
     void updateRevisions();
 
+    bool setTabSettings(const TabSettings& tabSettings) {
+        if (tabSettings == m_configuredTabSettings)
+            return false;
+        m_configuredTabSettings = tabSettings;
+        return true;
+    }
+
+    const TabSettings& getTabSettings() {
+        static const TabSettings MAKEFILE_TAB_SETTINGS(
+            TabSettings::MixedTabPolicy, 8, 8,
+            TabSettings::ContinuationAlignWithIndent);
+        return m_isMakefile ? MAKEFILE_TAB_SETTINGS : m_configuredTabSettings;
+    }
+
 public:
     QString m_defaultPath;
     QString m_suggestedFileName;
     TypingSettings m_typingSettings;
     StorageSettings m_storageSettings;
-    TabSettings m_tabSettings;
     ExtraEncodingSettings m_extraEncodingSettings;
     FontSettings m_fontSettings;
     bool m_fontSettingsNeedsApply; // for applying font settings delayed till an editor becomes visible
@@ -104,10 +118,14 @@ public:
     QScopedPointer<Indenter> m_indenter;
 
     bool m_fileIsReadOnly;
+    bool m_isMakefile;
     int m_autoSaveRevision;
 
     TextMarks m_marksCache; // Marks not owned
     Utils::Guard m_modificationChangedGuard;
+
+private:
+    TabSettings m_configuredTabSettings;
 };
 
 QTextCursor TextDocumentPrivate::indentOrUnindent(const QTextCursor &textCursor, bool doIndent,
@@ -116,7 +134,7 @@ QTextCursor TextDocumentPrivate::indentOrUnindent(const QTextCursor &textCursor,
     QTextCursor cursor = textCursor;
     cursor.beginEditBlock();
 
-    TabSettings &ts = m_tabSettings;
+    const TabSettings &ts = getTabSettings();
 
     // Indent or unindent the selected lines
     int pos = cursor.position();
@@ -328,19 +346,18 @@ const StorageSettings &TextDocument::storageSettings() const
 
 void TextDocument::setTabSettings(const TabSettings &tabSettings)
 {
-    if (tabSettings == d->m_tabSettings)
+    if (!d->setTabSettings(tabSettings))
         return;
-    d->m_tabSettings = tabSettings;
 
     if (Highlighter *highlighter = qobject_cast<Highlighter *>(d->m_highlighter))
-        highlighter->setTabSettings(tabSettings);
+        highlighter->setTabSettings(d->getTabSettings());
 
     emit tabSettingsChanged();
 }
 
 const TabSettings &TextDocument::tabSettings() const
 {
-    return d->m_tabSettings;
+    return d->getTabSettings();
 }
 
 void TextDocument::setFontSettings(const FontSettings &fontSettings)
@@ -394,12 +411,12 @@ void TextDocument::setExtraEncodingSettings(const ExtraEncodingSettings &extraEn
 
 void TextDocument::autoIndent(const QTextCursor &cursor, QChar typedChar)
 {
-    d->m_indenter->indent(&d->m_document, cursor, typedChar, d->m_tabSettings);
+    d->m_indenter->indent(&d->m_document, cursor, typedChar, d->getTabSettings());
 }
 
 void TextDocument::autoReindent(const QTextCursor &cursor)
 {
-    d->m_indenter->reindent(&d->m_document, cursor, d->m_tabSettings);
+    d->m_indenter->reindent(&d->m_document, cursor, d->getTabSettings());
 }
 
 QTextCursor TextDocument::indent(const QTextCursor &cursor, bool blockSelection, int column,
@@ -581,7 +598,19 @@ void TextDocument::setFilePath(const Utils::FileName &newName)
 {
     if (newName == filePath())
         return;
-    IDocument::setFilePath(Utils::FileName::fromUserInput(newName.toFileInfo().absoluteFilePath()));
+    QFileInfo fi = newName.toFileInfo();
+    IDocument::setFilePath(Utils::FileName::fromUserInput(fi.absoluteFilePath()));
+
+    bool isMakefile = fi.baseName() == "Makefile";
+    if (isMakefile != d->m_isMakefile) {
+        d->m_isMakefile = isMakefile;
+
+        // Copied from setTabSettings()...
+        if (Highlighter *highlighter = qobject_cast<Highlighter *>(d->m_highlighter))
+            highlighter->setTabSettings(d->getTabSettings());
+
+        emit tabSettingsChanged();
+    }
 }
 
 bool TextDocument::isFileReadOnly() const
@@ -795,23 +824,25 @@ void TextDocument::cleanWhitespace(QTextCursor &cursor, bool cleanIndentation, b
     if (blocks.isEmpty())
         return;
 
+    const TabSettings& tabSettings = d->getTabSettings();
+
     const IndentationForBlock &indentations =
-            d->m_indenter->indentationForBlocks(blocks, d->m_tabSettings);
+            d->m_indenter->indentationForBlocks(blocks, tabSettings);
 
     foreach (block, blocks) {
         QString blockText = block.text();
-        d->m_tabSettings.removeTrailingWhitespace(cursor, block);
+        d->getTabSettings().removeTrailingWhitespace(cursor, block);
         const int indent = indentations[block.blockNumber()];
-        if (cleanIndentation && !d->m_tabSettings.isIndentationClean(block, indent)) {
+        if (cleanIndentation && !tabSettings.isIndentationClean(block, indent)) {
             cursor.setPosition(block.position());
-            int firstNonSpace = d->m_tabSettings.firstNonSpace(blockText);
+            int firstNonSpace = tabSettings.firstNonSpace(blockText);
             if (firstNonSpace == blockText.length()) {
                 cursor.movePosition(QTextCursor::EndOfBlock, QTextCursor::KeepAnchor);
                 cursor.removeSelectedText();
             } else {
-                int column = d->m_tabSettings.columnAt(blockText, firstNonSpace);
+                int column = tabSettings.columnAt(blockText, firstNonSpace);
                 cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor, firstNonSpace);
-                QString indentationString = d->m_tabSettings.indentationString(0, column, column - indent, block);
+                QString indentationString = tabSettings.indentationString(0, column, column - indent, block);
                 cursor.insertText(indentationString);
             }
         }
